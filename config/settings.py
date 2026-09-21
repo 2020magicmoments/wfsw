@@ -28,11 +28,21 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.environ.get('SECRET_KEY', 'default-unsafe-key')
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
-CSRF_TRUSTED_ORIGINS = os.environ.get(
-    'CSRF_TRUSTED_ORIGINS',
-    'http://127.0.0.1:8000,http://localhost:8000'
-).split(',')
+# CSRF_TRUSTED_ORIGINS = os.environ.get(
+#     'CSRF_TRUSTED_ORIGINS',
+#     'http://127.0.0.1:8000,http://localhost:8000'
+# ).split(',')
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.railway.app',
+    'https://*.up.railway.app',
+]
 
+# Dynamically include Railway's assigned domain with https:// prefix
+RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
+if RAILWAY_PUBLIC_DOMAIN:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RAILWAY_PUBLIC_DOMAIN}')
+
+    
 # Application definition
 
 INSTALLED_APPS = [
@@ -134,10 +144,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_DIR = BASE_DIR / 'static'
+if STATIC_DIR.exists():
+    STATICFILES_DIRS = [STATIC_DIR]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+# STATICFILES_DIRS = [BASE_DIR / 'static']
+
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/devices/dashboard/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
