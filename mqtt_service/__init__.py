@@ -1,0 +1,1 @@
+default_app_config = 'mqtt_service.apps.MqttServiceConfig'

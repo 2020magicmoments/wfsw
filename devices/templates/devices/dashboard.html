@@ -1,0 +1,273 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Dashboard - IoT Platform{% endblock %}
+
+{% block content %}
+
+{% if user.is_superuser or user.is_staff %}
+<div class="alert alert-warning d-flex align-items-center justify-content-between mb-4 shadow-sm" role="alert">
+    <div>
+        <i class="bi bi-shield-lock-fill fs-5 me-2"></i>
+        <strong>Admin Notice:</strong> To view all devices across all users, open Admin Panel.
+    </div>
+    <a href="{% url 'devices:admin_dashboard' %}" class="btn btn-dark btn-sm fw-bold ms-3">
+        Go to Admin Panel &rarr;
+    </a>
+</div>
+{% endif %}
+
+<!-- Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card card-custom bg-primary text-white p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0 opacity-75">Total Devices</h6>
+                    <h2 class="fw-bold mb-0">{{ total_devices }}</h2>
+                </div>
+                <i class="bi bi-cpu display-4 opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card card-custom bg-success text-white p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0 opacity-75">Online Now</h6>
+                    <h2 class="fw-bold mb-0" id="stat-online-count">{{ online_devices }}</h2>
+                </div>
+                <i class="bi bi-wifi display-4 opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card card-custom bg-dark text-white p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0 opacity-75">Offline</h6>
+                    <h2 class="fw-bold mb-0" id="stat-offline-count">{{ total_devices|add:online_devices|add:"-"|default:0 }}</h2>
+                </div>
+                <i class="bi bi-wifi-off display-4 opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0"><i class="bi bi-grid-fill me-2"></i>My Devices</h4>
+    <a href="{% url 'devices:add' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Add Device
+    </a>
+</div>
+
+{% if devices %}
+<div class="row g-4">
+    {% for device in devices %}
+    {% with r1=device.current_state.relay_1|default:device.current_state.power|default:"OFF" r2=device.current_state.relay_2|default:"OFF" %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card card-custom bg-white h-100 shadow-sm" data-device-id="{{ device.id }}">
+            <div class="card-body">
+
+                <!-- Title + Online badge -->
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h5 class="fw-bold mb-1">{{ device.name }}</h5>
+                        <span class="badge bg-light text-dark border">
+                            <i class="bi {{ device.device_type.icon }} me-1"></i>
+                            {{ device.device_type.name }}
+                        </span>
+                    </div>
+                    {% if device.is_online %}
+                        <span class="online-badge badge bg-success rounded-pill">
+                            <i class="bi bi-circle-fill me-1" style="font-size:8px"></i> Online
+                        </span>
+                    {% else %}
+                        <span class="online-badge badge bg-secondary rounded-pill">
+                            <i class="bi bi-circle-fill me-1" style="font-size:8px"></i> Offline
+                        </span>
+                    {% endif %}
+                </div>
+
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-upc-scan me-1"></i>
+                    <code>{{ device.unique_device_id }}</code>
+                </p>
+
+                <!-- ════ RELAY 1 CONTROLS ════ -->
+                <div class="border rounded p-2 mb-2 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold small">
+                            <i class="bi bi-toggle-on me-1"></i> Relay 1
+                        </span>
+                        <span class="relay-1-badge badge {% if r1 == 'ON' %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ r1 }}
+                        </span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button onclick="sendRelayCommand('{{ device.id }}', 'ON', 1)"
+                            class="relay-1-btn-on btn btn-sm w-100 {% if r1 == 'ON' %}btn-success{% else %}btn-outline-success{% endif %}">
+                            ON
+                        </button>
+                        <button onclick="sendRelayCommand('{{ device.id }}', 'OFF', 1)"
+                            class="relay-1-btn-off btn btn-sm w-100 {% if r1 == 'OFF' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                            OFF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ════ RELAY 2 CONTROLS ════ -->
+                <div class="border rounded p-2 mb-2 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold small">
+                            <i class="bi bi-toggle-on me-1"></i> Relay 2
+                        </span>
+                        <span class="relay-2-badge badge {% if r2 == 'ON' %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ r2 }}
+                        </span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button onclick="sendRelayCommand('{{ device.id }}', 'ON', 2)"
+                            class="relay-2-btn-on btn btn-sm w-100 {% if r2 == 'ON' %}btn-success{% else %}btn-outline-success{% endif %}">
+                            ON
+                        </button>
+                        <button onclick="sendRelayCommand('{{ device.id }}', 'OFF', 2)"
+                            class="relay-2-btn-off btn btn-sm w-100 {% if r2 == 'OFF' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                            OFF
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer actions -->
+            <div class="card-footer bg-transparent border-top d-flex gap-2">
+                <a href="{% url 'devices:control' device.id %}" class="btn btn-sm btn-primary flex-fill">
+                    <i class="bi bi-sliders me-1"></i> Control
+                </a>
+                <a href="{% url 'devices:logs' device.id %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-clock-history"></i>
+                </a>
+                <a href="{% url 'devices:delete' device.id %}" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-inbox display-1 text-muted"></i>
+    <h5 class="mt-3 text-muted">No devices yet</h5>
+    <p class="text-muted">Add your first IoT device to get started.</p>
+    <a href="{% url 'devices:add' %}" class="btn btn-primary btn-lg mt-2">
+        <i class="bi bi-plus-lg me-1"></i> Add Your First Device
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const csrfToken = '{{ csrf_token }}';
+
+    // ── AJAX Relay Command (No Page Reload) ──
+    function sendRelayCommand(deviceId, action, relayNum) {
+        const formData = new FormData();
+        formData.append('device_id', deviceId);
+        formData.append('action', action);
+        formData.append('relay_number', relayNum);
+
+        fetch("{% url 'devices:dashboard' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('⚡ Command sent:', data);
+        })
+        .catch(err => console.error('AJAX error:', err));
+    }
+
+    // ── WebSocket Listener ──
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/devices/status/`;
+
+    function connectWebSocket() {
+        const socket = new WebSocket(wsUrl);
+
+        socket.onopen = function() {
+            console.log('✅ WebSocket Connected');
+            const statusBadge = document.getElementById('ws-status');
+            if (statusBadge) {
+                statusBadge.innerHTML = '<span class="badge bg-success"><i class="bi bi-broadcast"></i> Live</span>';
+            }
+        };
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('📨 Real-time WebSocket Event:', data);
+
+            if (data.type === 'device_update') {
+                updateDeviceCardUI(data);
+            }
+        };
+
+        socket.onclose = function() {
+            console.log('❌ WebSocket Disconnected. Retrying in 3s...');
+            setTimeout(connectWebSocket, 3000);
+        };
+    }
+
+    function updateDeviceCardUI(data) {
+        const card = document.querySelector(`[data-device-id="${data.device_id}"]`);
+        if (!card) return;
+
+        // 1. Online / Offline status
+        const onlineBadge = card.querySelector('.online-badge');
+        if (onlineBadge) {
+            if (data.is_online) {
+                onlineBadge.className = 'online-badge badge bg-success rounded-pill';
+                onlineBadge.innerHTML = '<i class="bi bi-circle-fill me-1" style="font-size:8px"></i> Online';
+            } else {
+                onlineBadge.className = 'online-badge badge bg-secondary rounded-pill';
+                onlineBadge.innerHTML = '<i class="bi bi-circle-fill me-1" style="font-size:8px"></i> Offline';
+            }
+        }
+
+        // 2. Relay 1 & Relay 2 statuses
+        const r1 = data.current_state.relay_1 || data.current_state.power || 'OFF';
+        const r2 = data.current_state.relay_2 || 'OFF';
+
+        setRelayState(card, 1, r1);
+        setRelayState(card, 2, r2);
+    }
+
+    function setRelayState(card, relayNum, state) {
+        const badge = card.querySelector(`.relay-${relayNum}-badge`);
+        if (badge) {
+            badge.className = `relay-${relayNum}-badge badge ${state === 'ON' ? 'bg-success' : 'bg-secondary'}`;
+            badge.textContent = state;
+        }
+
+        const btnOn = card.querySelector(`.relay-${relayNum}-btn-on`);
+        const btnOff = card.querySelector(`.relay-${relayNum}-btn-off`);
+
+        if (btnOn && btnOff) {
+            btnOn.className = `relay-${relayNum}-btn-on btn btn-sm w-100 ${state === 'ON' ? 'btn-success' : 'btn-outline-success'}`;
+            btnOff.className = `relay-${relayNum}-btn-off btn btn-sm w-100 ${state === 'OFF' ? 'btn-danger' : 'btn-outline-danger'}`;
+        }
+    }
+
+    // Connect WebSocket on load
+    connectWebSocket();
+</script>
+{% endblock %}

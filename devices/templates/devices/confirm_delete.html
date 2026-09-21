@@ -1,0 +1,29 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Delete {{ device.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card card-custom bg-white p-4 text-center">
+            <i class="bi bi-exclamation-triangle text-danger display-4"></i>
+            <h4 class="fw-bold mt-3">Delete Device?</h4>
+            <p class="text-muted">
+                Are you sure you want to remove
+                <strong>"{{ device.name }}"</strong>
+                ({{ device.unique_device_id }})?
+                <br>This action cannot be undone.
+            </p>
+            <form method="POST" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger px-4 py-2 fw-semibold">
+                    <i class="bi bi-trash me-1"></i> Yes, Delete
+                </button>
+            </form>
+            <a href="{% url 'devices:dashboard' %}" class="btn btn-outline-secondary px-4 py-2 ms-2">
+                Cancel
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

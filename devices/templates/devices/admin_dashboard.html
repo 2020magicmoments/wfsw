@@ -1,0 +1,152 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Admin Dashboard - IoT Platform{% endblock %}
+
+{% block content %}
+<h3 class="fw-bold mb-4">
+    <i class="bi bi-shield-lock text-warning me-2"></i>Admin Dashboard
+</h3>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card card-custom bg-primary text-white p-3 text-center">
+            <h2 class="fw-bold mb-0">{{ total_users }}</h2>
+            <small>Total Users</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card card-custom bg-info text-white p-3 text-center">
+            <h2 class="fw-bold mb-0">{{ total_devices }}</h2>
+            <small>Total Devices</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card card-custom bg-success text-white p-3 text-center">
+            <h2 class="fw-bold mb-0">{{ online_devices }}</h2>
+            <small>Online Now</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card card-custom bg-dark text-white p-3 text-center">
+            <h2 class="fw-bold mb-0">{{ total_devices|add:"-"|add:online_devices }}</h2>
+            <small>Offline</small>
+        </div>
+    </div>
+</div>
+
+<!-- All Devices Table -->
+<div class="card card-custom bg-white p-4">
+    <h5 class="fw-bold mb-3">
+        <i class="bi bi-list-ul me-2"></i>All Devices (All Users)
+    </h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Device Name</th>
+                    <th>Unique ID</th>
+                    <th>Type</th>
+                    <th>Owner</th>
+                    <th>Status</th>
+                    <th>Power</th>
+                    <th>Last Seen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for device in devices %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td class="fw-semibold">{{ device.name }}</td>
+                    <td><code>{{ device.unique_device_id }}</code></td>
+                    <td>
+                        <span class="badge bg-light text-dark border">
+                            <i class="bi {{ device.device_type.icon }} me-1"></i>
+                            {{ device.device_type.name }}
+                        </span>
+                    </td>
+                    <td>
+                        <i class="bi bi-person-fill text-primary me-1"></i>
+                        {{ device.user.username }}
+                    </td>
+                    <td>
+                        {% if device.is_online %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-circle-fill" style="font-size:7px"></i> Online
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-circle-fill" style="font-size:7px"></i> Offline
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if device.current_state.power == "ON" %}
+                            <span class="text-success fw-bold">ON</span>
+                        {% else %}
+                            <span class="text-muted">OFF</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small class="text-muted">
+                            {% if device.last_seen %}
+                                {{ device.last_seen|timesince }} ago
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </small>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        No devices registered yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Users List -->
+<div class="card card-custom bg-white p-4 mt-4">
+    <h5 class="fw-bold mb-3">
+        <i class="bi bi-people-fill me-2"></i>Registered Users
+    </h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Devices</th>
+                    <th>Joined</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td class="fw-semibold">
+                        {{ u.username }}
+                        {% if u.is_superuser %}
+                            <span class="badge bg-warning text-dark ms-1">Admin</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        <span class="badge bg-primary rounded-pill">
+                            {{ u.devices.count }}
+                        </span>
+                    </td>
+                    <td><small>{{ u.date_joined|date:"M d, Y" }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

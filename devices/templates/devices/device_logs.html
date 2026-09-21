@@ -1,0 +1,57 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Logs - {{ device.name }}{% endblock %}
+
+{% block content %}
+<a href="{% url 'devices:control' device.id %}" class="text-decoration-none mb-3 d-inline-block">
+    <i class="bi bi-arrow-left me-1"></i> Back to {{ device.name }}
+</a>
+
+<div class="card card-custom bg-white p-4">
+    <h4 class="fw-bold mb-3">
+        <i class="bi bi-clock-history me-2"></i>Command History — {{ device.name }}
+    </h4>
+    <hr>
+
+    {% if logs %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                    <th>Value</th>
+                    <th>Performed By</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ log.timestamp|date:"M d, Y H:i:s" }}</td>
+                    <td><span class="fw-semibold">{{ log.action }}</span></td>
+                    <td>{{ log.value|default:"—" }}</td>
+                    <td>{{ log.performed_by.username|default:"System" }}</td>
+                    <td>
+                        {% if log.status == "sent" %}
+                            <span class="badge bg-warning text-dark">Sent</span>
+                        {% elif log.status == "delivered" %}
+                            <span class="badge bg-info">Delivered</span>
+                        {% elif log.status == "executed" %}
+                            <span class="badge bg-success">Executed</span>
+                        {% elif log.status == "failed" %}
+                            <span class="badge bg-danger">Failed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="text-muted text-center py-4">No command logs yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

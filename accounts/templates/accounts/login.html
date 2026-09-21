@@ -1,0 +1,45 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Login - IoT Platform{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card card-custom p-4 bg-white">
+            <div class="text-center mb-4">
+                <i class="bi bi-shield-lock text-primary display-5"></i>
+                <h3 class="fw-bold mt-2">Welcome Back</h3>
+                <p class="text-muted">Log in to your IoT Platform dashboard</p>
+            </div>
+
+            <form method="POST" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2">
+                        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Username</label>
+                    {{ form.username }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Password</label>
+                    {{ form.password }}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 mt-2 fw-semibold">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                </button>
+            </form>
+
+            <div class="text-center mt-4">
+                <small class="text-muted">Don't have an account? <a href="{% url 'accounts:signup' %}" class="text-decoration-none fw-bold">Sign Up</a></small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

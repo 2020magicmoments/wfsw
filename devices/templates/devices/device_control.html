@@ -1,0 +1,269 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Control {{ device.name }} - IoT Platform{% endblock %}
+
+{% block content %}
+<!-- Back Link -->
+<a href="{% url 'devices:dashboard' %}" class="text-decoration-none mb-3 d-inline-block">
+    <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+</a>
+
+<div class="row g-4">
+    <!-- Left: Controls -->
+    <div class="col-lg-7">
+        <div class="card card-custom bg-white p-4">
+            
+            <!-- Header Info -->
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h3 class="fw-bold mb-1">{{ device.name }}</h3>
+                    <span class="badge bg-light text-dark border me-2">
+                        <i class="bi {{ device.device_type.icon }} me-1"></i>
+                        {{ device.device_type.name }}
+                    </span>
+                    <span class="text-muted small"><code>{{ device.unique_device_id }}</code></span>
+                </div>
+
+                <!-- Online / Offline Indicator -->
+                <div>
+                    {% if device.is_online %}
+                        <span class="badge bg-success rounded-pill px-3 py-2">
+                            <i class="bi bi-circle-fill me-1" style="font-size:8px"></i> Online
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary rounded-pill px-3 py-2">
+                            <i class="bi bi-circle-fill me-1" style="font-size:8px"></i> Offline
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- MQTT Status Badge -->
+            <div class="mb-3">
+                {% if mqtt_connected %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                        <i class="bi bi-broadcast me-1"></i> HiveMQ Broker Connected
+                    </span>
+                {% else %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                        <i class="bi bi-broadcast-pin me-1"></i> HiveMQ Broker Disconnected
+                    </span>
+                {% endif %}
+            </div>
+
+            <hr>
+
+            <!-- ════════ WIFI SWITCH CONTROLS ════════ -->
+            {% if device.device_type.slug == "wifi_switch" %}
+                <h5 class="fw-bold mb-3"><i class="bi bi-toggle-on me-2"></i>Dual Relay Control</h5>
+
+                <!-- RELAY 1 -->
+                <div class="border rounded p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0">Relay 1</h6>
+                        {% if relay_1 == "ON" %}
+                            <span class="badge bg-success fs-6">ON</span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-6">OFF</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-3">
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="ON">
+                            <input type="hidden" name="relay_number" value="1">
+                            <button type="submit" class="btn btn-lg px-4 {% if relay_1 == 'ON' %}btn-success{% else %}btn-outline-success{% endif %}">
+                                <i class="bi bi-power me-1"></i> ON
+                            </button>
+                        </form>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="OFF">
+                            <input type="hidden" name="relay_number" value="1">
+                            <button type="submit" class="btn btn-lg px-4 {% if relay_1 == 'OFF' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                                <i class="bi bi-power me-1"></i> OFF
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- RELAY 2 -->
+                <div class="border rounded p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0">Relay 2</h6>
+                        {% if relay_2 == "ON" %}
+                            <span class="badge bg-success fs-6">ON</span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-6">OFF</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-3">
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="ON">
+                            <input type="hidden" name="relay_number" value="2">
+                            <button type="submit" class="btn btn-lg px-4 {% if relay_2 == 'ON' %}btn-success{% else %}btn-outline-success{% endif %}">
+                                <i class="bi bi-power me-1"></i> ON
+                            </button>
+                        </form>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="OFF">
+                            <input type="hidden" name="relay_number" value="2">
+                            <button type="submit" class="btn btn-lg px-4 {% if relay_2 == 'OFF' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                                <i class="bi bi-power me-1"></i> OFF
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            <!-- ════════ MOTOR CONTROLLER CONTROLS ════════ -->
+            {% elif device.device_type.slug == "motor_controller" %}
+                <h5 class="fw-bold mb-3"><i class="bi bi-gear-wide-connected me-2"></i>Motor Controls</h5>
+
+                <!-- Power -->
+                <div class="d-flex gap-3 mb-4">
+                    <form method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="ON">
+                        <button type="submit"
+                            class="btn btn-lg px-4 py-3 fw-bold {% if device.current_state.power == 'ON' %}btn-success{% else %}btn-outline-success{% endif %}">
+                            <i class="bi bi-power me-1"></i> ON
+                        </button>
+                    </form>
+                    <form method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="OFF">
+                        <button type="submit"
+                            class="btn btn-lg px-4 py-3 fw-bold {% if device.current_state.power == 'OFF' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                            <i class="bi bi-power me-1"></i> OFF
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Speed -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-speedometer me-1"></i> Speed:
+                        <span id="speedValue" class="text-primary fw-bold">
+                            {{ device.current_state.speed|default:"0" }}%
+                        </span>
+                    </label>
+                    <form method="POST" id="speedForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="SET_SPEED">
+                        <input type="hidden" name="value" id="speedInput" value="{{ device.current_state.speed|default:'0' }}">
+                        <input type="range" class="form-range" min="0" max="100" step="5" id="speedSlider" value="{{ device.current_state.speed|default:'0' }}">
+                        <button type="submit" class="btn btn-sm btn-primary mt-1">
+                            <i class="bi bi-check-lg me-1"></i> Set Speed
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Direction -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-arrow-repeat me-1"></i> Direction
+                    </label>
+                    <div class="d-flex gap-2">
+                        <form method="POST" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="SET_DIRECTION">
+                            <input type="hidden" name="value" value="CW">
+                            <button type="submit" class="btn px-4 py-2 {% if device.current_state.direction == 'CW' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                <i class="bi bi-arrow-clockwise me-1"></i> Clockwise
+                            </button>
+                        </form>
+                        <form method="POST" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="SET_DIRECTION">
+                            <input type="hidden" name="value" value="CCW">
+                            <button type="submit" class="btn px-4 py-2 {% if device.current_state.direction == 'CCW' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i> Counter-CW
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            <!-- ════════ GENERIC DEVICE CONTROLS ════════ -->
+            {% else %}
+                <h5 class="fw-bold mb-3"><i class="bi bi-sliders me-2"></i>Controls</h5>
+                <div class="d-flex gap-3 mb-4">
+                    <form method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="ON">
+                        <button type="submit" class="btn btn-lg btn-success px-5 py-3 fw-bold">
+                            <i class="bi bi-power me-2"></i> TURN ON
+                        </button>
+                    </form>
+                    <form method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="OFF">
+                        <button type="submit" class="btn btn-lg btn-danger px-5 py-3 fw-bold">
+                            <i class="bi bi-power me-2"></i> TURN OFF
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- Right: Recent Logs -->
+    <div class="col-lg-5">
+        <div class="card card-custom bg-white p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Recent Activity</h5>
+                <a href="{% url 'devices:logs' device.id %}" class="btn btn-sm btn-outline-secondary">
+                    View All
+                </a>
+            </div>
+            <hr>
+            {% if logs %}
+                <div class="list-group list-group-flush">
+                    {% for log in logs %}
+                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-semibold">{{ log.action }}</span>
+                            {% if log.value %}
+                                <span class="text-muted small ms-1">({{ log.value }})</span>
+                            {% endif %}
+                            <br>
+                            <small class="text-muted">
+                                {{ log.timestamp|timesince }} ago
+                            </small>
+                        </div>
+                        {% if log.status == "sent" %}
+                            <span class="badge bg-warning text-dark">Sent</span>
+                        {% elif log.status == "executed" %}
+                            <span class="badge bg-success">Executed</span>
+                        {% elif log.status == "failed" %}
+                            <span class="badge bg-danger">Failed</span>
+                        {% else %}
+                            <span class="badge bg-info">{{ log.status }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-3">No activity recorded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Motor speed slider live display update
+    const slider = document.getElementById('speedSlider');
+    const display = document.getElementById('speedValue');
+    const hiddenInput = document.getElementById('speedInput');
+    if (slider) {
+        slider.addEventListener('input', function () {
+            display.textContent = this.value + '%';
+            hiddenInput.value = this.value;
+        });
+    }
+</script>
+{% endblock %}
