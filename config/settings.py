@@ -238,19 +238,25 @@ LOGGING = {
 #     },
 # }
 
-REDIS_URL = os.environ.get('REDIS_URL')
+REDIS_URL = os.environ.get('REDIS_URL') or os.environ.get('REDIS_PRIVATE_URL')
 
 if REDIS_URL:
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                "hosts": [REDIS_URL],
+                'hosts': [{
+                    'address': REDIS_URL,
+                    'socket_timeout': 10,
+                    'socket_connect_timeout': 10,
+                    'health_check_interval': 30,
+                }],
+                'capacity': 1500,
+                'expiry': 10,
             },
         },
     }
 else:
-    # Local development only
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels.layers.InMemoryChannelLayer',
