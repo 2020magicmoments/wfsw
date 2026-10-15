@@ -46,6 +46,13 @@ def api_add_device(request):
     if serializer.is_valid():
         unique_id = serializer.validated_data['unique_device_id'].lower()
 
+        # Format validation
+        if not re.match(r'^(elx|elx32)-[a-f0-9]{12}$', unique_id):
+            return Response(
+                {'error': "Invalid format. ID must start with 'elx32-' followed by 12 hex chars (e.g. elx32-9454c53d1e2c)."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         # Uniqueness Check
         if Device.objects.filter(unique_device_id=unique_id).exists():
             return Response(

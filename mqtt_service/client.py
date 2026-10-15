@@ -8,7 +8,7 @@ import paho.mqtt.client as mqtt
 from django.conf import settings
 from django.utils import timezone
 
-from .topics import get_relay_set_topic, get_wildcard_topic, parse_incoming_topic
+from .topics import get_relay_set_topic, get_wildcard_topic, parse_incoming_topic, get_wifi_config_topic
 
 logger = logging.getLogger('mqtt_service')
 
@@ -230,5 +230,49 @@ class MQTTClient:
         except Exception as e:
             logger.error(f"WebSocket push failed: {e}")
 
+
+
+    def publish_wifi_update(self, device_id, new_ssid, new_password):
+        """
+        Sends JSON payload with new WiFi credentials to the device.
+        """
+        if not self._connected:
+            return False
+
+        topic = get_wifi_update_topic(device_id)
+        payload = json.dumps({
+            "ssid": new_ssid,
+            "password": new_password
+        })
+
+        result = self.client.publish(topic, payload, qos=1, retain=False)
+        return result.rc == mqtt.MQTT_ERR_SUCCESS
+
 def get_mqtt_client():
     return MQTTClient()
+
+def publish_wifi_config(self, device_id, new_ssid, new_password):
+    """
+    Sends new WiFi credentials to a device.
+    Topic: devices/<id>/wifi/config/set
+    Payload: {"ssid": "...", "password": "..."}
+    """
+    if not self._connected:
+        logger.error("Cannot publish WiFi config: MQTT not connected")
+        return False
+
+    topic = get_wifi_config_topic(device_id)
+    payload = json.dumps({
+        "ssid": new_ssid,
+        "password": new_password
+    })
+
+    result = self.client.publish(topic, payload, qos=1, retain=False)
+
+    if result.rc == mqtt.MQTT_ERR_SUCCESS:
+        logger.info(f"📶 WiFi config sent to {device_id} → SSID: {new_ssid}")
+        return True
+    else:
+        logger.error(f"Failed to publish WiFi config (rc={result.rc})")
+        return False
+

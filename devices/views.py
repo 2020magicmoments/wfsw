@@ -194,3 +194,51 @@ def device_logs_view(request, device_id):
     return render(request, 'devices/device_logs.html', {
         'device': device, 'logs': logs
     })
+
+
+@login_required
+def update_device_wifi_view(request, device_id):
+    device = get_object_or_404(Device, id=device_id, user=request.user)
+
+    if request.method == 'POST':
+        new_ssid = request.POST.get('ssid', '').strip()
+        new_password = request.POST.get('password', '').strip()
+
+        if not new_ssid:
+            messages.error(request, "SSID cannot be empty.")
+            return redirect('devices:control', device_id=device.id)
+
+        # Basic length validation (ESP32 NVS limits)
+        if len(new_ssid) > 32:
+            messages.error(request, "SSID too long (max 32 characters).")
+            return redirect('devices:control', device_id=device.id)
+        if len(new_password) > 64:
+            messages.error(request, "Password too long (max 64 characters).")
+            return redirect('devices:control', device_id=device.id)
+
+        mqtt = get_mqtt_client()
+        success = mqtt.publish_wifi_config(
+            device_id=device.unique_device_id,
+            new_ssid=new_ssid,
+            new_password=new_password,
+        )
+
+        DeviceLog.objects.create(
+            device=device,
+            action='WIFI_UPDATE',
+            value=new_ssid,
+            performed_by=request.user,
+            status='sent' if success else 'failed',
+        )
+
+        if success:
+            messages.success(
+                request,
+                f"📶 WiFi update sent to {device.name}. "
+                f"Device will reboot and connect to '{new_ssid}'. "
+                f"If it fails, it will fall back to Captive Portal mode."
+            )
+        else:
+            messages.error(request, "MQTT disconnected. Could not send WiFi update.")
+
+        return redirect('devices:control', device_id=device.id)

@@ -92,3 +92,10 @@ def parse_incoming_topic(topic):
         return device_id, "info", None
         
     return None, None, None
+
+def get_wifi_config_topic(device_id):
+    """
+    Django -> ESP32: Remote WiFi configuration update
+    Example: devices/esp32-9454c53d1e2c/wifi/config/set
+    """
+    return f"devices/{device_id}/wifi/config/set"

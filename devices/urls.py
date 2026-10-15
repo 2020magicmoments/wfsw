@@ -10,4 +10,5 @@ urlpatterns = [
     path('<int:device_id>/control/', views.device_control_view, name='control'),
     path('<int:device_id>/delete/', views.delete_device_view, name='delete'),
     path('<int:device_id>/logs/', views.device_logs_view, name='logs'),
+    path('<int:device_id>/wifi/update/', views.update_device_wifi_view, name='wifi_update'),
 ]

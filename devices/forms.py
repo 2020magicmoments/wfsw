@@ -11,7 +11,7 @@ class AddDeviceForm(forms.ModelForm):
         widgets = {
             'unique_device_id': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g. DEV-ABC12345'
+                'placeholder': 'e.g. elx-9454c53d1e2c'
             }),
             'device_type': forms.Select(attrs={
                 'class': 'form-select'
@@ -31,10 +31,10 @@ class AddDeviceForm(forms.ModelForm):
         uid = self.cleaned_data.get('unique_device_id', '').strip().lower()
 
         # Format validation: esp32-<mac_address>
-        if not re.match(r'^esp32-[a-f0-9]{12}$', uid):
+        if not re.match(r'^(elx|elx32)-[a-f0-9]{12}$', uid):
             raise forms.ValidationError(
-                "Invalid format. Must be 'esp32-' followed by a 12-character MAC address "
-                "(e.g., esp32-9454c53d1e2c)."
+                "Invalid format. Must be 'elx' or 'elx32' followed by a 12-character MAC address "
+                "(e.g., elx32-9454c53d1e2c)."
             )
 
         # Uniqueness check
