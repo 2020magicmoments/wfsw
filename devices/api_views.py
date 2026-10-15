@@ -74,8 +74,8 @@ def clean_device_input(unique_device_id, name):
     clean_id = unique_device_id.strip().lower()
     clean_name = escape(name.strip())  # Sanitizes HTML tags to prevent XSS attacks
 
-    if not re.match(r'^esp32-[a-f0-9]{12}$', clean_id):
-        raise ValueError("Invalid Device ID format. Must be esp32- followed by 12 hex characters.")
+    if not re.match(r'^(elx|elx32)-[a-f0-9]{12}$', clean_id):
+        raise ValueError("Invalid Device ID format. Must be elx or elx32 followed by 12 hex characters.")
 
     return clean_id, clean_name
 
