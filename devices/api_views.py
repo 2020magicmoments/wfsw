@@ -47,9 +47,9 @@ def api_add_device(request):
         unique_id = serializer.validated_data['unique_device_id'].lower()
 
         # Format validation
-        if not re.match(r'^(elx|elx32)-[a-f0-9]{12}$', unique_id):
+        if not re.match(r'^elx-[a-f0-9]{12}$', unique_id):
             return Response(
-                {'error': "Invalid format. ID must start with 'elx32-' followed by 12 hex chars (e.g. elx32-9454c53d1e2c)."}, 
+                {'error': "Invalid format. ID must start with 'elx-' followed by 12 hex chars (e.g. elx-9454c53d1e2c)."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
 

@@ -30,11 +30,11 @@ class AddDeviceForm(forms.ModelForm):
     def clean_unique_device_id(self):
         uid = self.cleaned_data.get('unique_device_id', '').strip().lower()
 
-        # Format validation: esp32-<mac_address>
-        if not re.match(r'^(elx|elx32)-[a-f0-9]{12}$', uid):
+        # Format validation: elx-<mac_address>
+        if not re.match(r'^elx-[a-f0-9]{12}$', uid):
             raise forms.ValidationError(
-                "Invalid format. Must be 'elx' or 'elx32' followed by a 12-character MAC address "
-                "(e.g., elx32-9454c53d1e2c)."
+                "Invalid format. Must be 'elx-' followed by a 12-character MAC address "
+                "(e.g., elx-9454c53d1e2c)."
             )
 
         # Uniqueness check
@@ -55,8 +55,8 @@ class AddDeviceForm(forms.ModelForm):
         clean_id = unique_device_id.strip().lower()
         clean_name = escape(name.strip())  # Sanitizes HTML tags to prevent XSS attacks
 
-        if not re.match(r'^esp32-[a-f0-9]{12}$', clean_id):
-            raise ValueError("Invalid Device ID format. Must be esp32- followed by 12 hex characters.")
+        if not re.match(r'^elx-[a-f0-9]{12}$', clean_id):
+            raise ValueError("Invalid Device ID format. Must be elx or elx32 followed by 12 hex characters.")
 
         return clean_id, clean_name
 
